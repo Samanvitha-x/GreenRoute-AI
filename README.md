@@ -59,8 +59,7 @@ greenroute/
 │   └── main.js                # Frontend logic
 ├── co2_model.pkl              # Pre-trained ML model
 ├── rl_models/                 # Trained RL models (generated)
-├── requirements.txt           # Python dependencies
-├── .env                       # Environment configuration
+├── requirements.txt           # Python dependencies                
 └── README.md                  # This file
 ```
 
