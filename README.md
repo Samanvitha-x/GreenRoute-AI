@@ -1,6 +1,6 @@
 # 🌱 GreenRoute - CO₂ Optimized Delivery Routing
 
-**Final Year Academic Project**
+**Academic Project**
 
 An intelligent delivery routing system that minimizes CO₂ emissions using Machine Learning and Reinforcement Learning.
 
@@ -298,7 +298,7 @@ Academic Project - For Educational Use
 
 ## 👨‍💻 Author
 
-Final Year Project - 2026
+Mini Project - 2026
 
 ---
 
