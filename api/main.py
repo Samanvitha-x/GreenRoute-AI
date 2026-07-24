@@ -193,11 +193,17 @@ async def optimize_route(request: OptimizeRequest):
             detail=f"Model file not found: {str(e)}"
         )
     except Exception as e:
-        print(f"\n[ERROR] Error during optimization: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+    import traceback
+
+    print("\n========== FULL ERROR ==========")
+    traceback.print_exc()
+    print(f"Exception: {repr(e)}")
+    print("================================\n")
+
+    raise HTTPException(
+        status_code=500,
+        detail=f"Internal server error: {str(e)}"
+    )
 
 
 @app.post("/geocode")
