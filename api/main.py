@@ -192,8 +192,8 @@ async def optimize_route(request: OptimizeRequest):
             status_code=500,
             detail=f"Model file not found: {str(e)}"
         )
-    except Exception as e:
-    import traceback
+   except Exception as e:
+       import traceback
 
     print("\n========== FULL ERROR ==========")
     traceback.print_exc()
