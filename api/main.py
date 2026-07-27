@@ -49,7 +49,7 @@ class OptimizeRequest(BaseModel):
     vehicle_type: str = Field(default="van", description="Vehicle type: car, van, truck, bike")
     cargo_weight: float = Field(default=500.0, description="Cargo weight in kg")
     avg_speed: float = Field(default=50.0, description="Average speed in km/h")
-    
+
     model_config = ConfigDict(
         populate_by_name=True,
         json_schema_extra={
@@ -95,7 +95,7 @@ async def health_check():
 async def optimize_route(request: OptimizeRequest):
     """
     Optimize delivery route to minimize CO₂ emissions
-    
+
     Process:
     1. Geocode all addresses to coordinates
     2. Calculate distance matrix
@@ -110,21 +110,21 @@ async def optimize_route(request: OptimizeRequest):
                 status_code=400,
                 detail="At least one destination address is required"
             )
-        
+
         if request.vehicle_type.lower() not in ['car', 'van', 'truck', 'bike']:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid vehicle type. Must be: car, van, truck, or bike"
             )
-        
+
         # Step 1: Geocode addresses
         import time
         t0 = time.time()
         geocoder = get_geocoder()
-        
+
         all_addresses = [request.start_address] + request.destination_addresses
         coordinates = geocoder.geocode_addresses(all_addresses)
-        
+
         # Check for geocoding failures
         failed_indices = [i for i, coord in enumerate(coordinates) if coord is None]
         if failed_indices:
@@ -133,10 +133,10 @@ async def optimize_route(request: OptimizeRequest):
                 status_code=400,
                 detail=f"Failed to geocode addresses: {failed_addresses}"
             )
-        
+
         t1 = time.time()
         print(f"   [TIME] Geocoding took: {t1 - t0:.2f}s")
-        
+
         # Step 2: Build CO2 cost matrix
         co2_matrix = build_co2_matrix(
             coordinates=coordinates,
@@ -146,7 +146,7 @@ async def optimize_route(request: OptimizeRequest):
         )
         t2 = time.time()
         print(f"   [TIME] Matrix Build took: {t2 - t1:.2f}s")
-        
+
         # Step 3: Optimize route using RL
         optimized_order, total_co2 = optimize_delivery_route(
             co2_matrix=co2_matrix,
@@ -154,7 +154,7 @@ async def optimize_route(request: OptimizeRequest):
         )
         t3 = time.time()
         print(f"   [TIME] RL Optimization took: {t3 - t2:.2f}s")
-        
+
         # Step 4: Calculate comprehensive metrics
         metrics = calculate_route_metrics(
             optimized_order=optimized_order,
@@ -162,7 +162,7 @@ async def optimize_route(request: OptimizeRequest):
             co2_matrix=co2_matrix,
             avg_speed=request.avg_speed
         )
-        
+
         # Step 5: Build response
         route_info = []
         for seq, idx in enumerate(optimized_order):
@@ -173,7 +173,7 @@ async def optimize_route(request: OptimizeRequest):
                 longitude=lon,
                 sequence=seq
             ))
-        
+
         response = OptimizeResponse(
             success=True,
             message=f"Route optimized in {time.time() - t0:.1f}s",
@@ -181,44 +181,47 @@ async def optimize_route(request: OptimizeRequest):
             metrics=metrics,
             co2_matrix=co2_matrix.tolist()
         )
-        
+
         print(f"\n[SUCCESS] Total processing time: {time.time() - t0:.2f}s\n")
-        
+
         return response
-        
+
     except HTTPException:
         raise
+
     except FileNotFoundError as e:
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Model file not found: {str(e)}"
         )
+
     except Exception as e:
-    print("\n========== FULL ERROR ==========")
-    traceback.print_exc()
-    print("================================")
-    raise HTTPException(
-        status_code=500,
-        detail=str(e)
-    )
+        traceback.print_exc()
+        print(f"\n[ERROR] {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal Server Error: {str(e)}"
+        )
+
 
 @app.post("/geocode")
 async def geocode_address(address: str):
     """
     Geocode a single address to coordinates
-    
+
     Useful for testing and validation
     """
     try:
         geocoder = get_geocoder()
         coords = geocoder.geocode_address(address)
-        
+
         if coords is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Could not geocode address: {address}"
             )
-        
+
         lat, lon = coords
         return {
             "success": True,
@@ -226,7 +229,7 @@ async def geocode_address(address: str):
             "latitude": lat,
             "longitude": lon
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -244,17 +247,17 @@ app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
 # Run server
 if __name__ == "__main__":
     import uvicorn
-    
+
     host = os.getenv("API_HOST", "0.0.0.0")
     port = int(os.getenv("API_PORT", 8000))
-    
+
     print("=" * 60)
     print("GreenRoute API Server")
     print("=" * 60)
     print(f"Starting server at http://{host}:{port}")
     print("API Documentation: http://localhost:8000/docs")
     print("=" * 60)
-    
+
     uvicorn.run(
         "api.main:app",
         host=host,
