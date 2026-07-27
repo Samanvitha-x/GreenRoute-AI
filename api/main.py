@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
 import numpy as np
 from dotenv import load_dotenv
+import traceback
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -193,12 +194,13 @@ async def optimize_route(request: OptimizeRequest):
             detail=f"Model file not found: {str(e)}"
         )
     except Exception as e:
-        print(f"\n[ERROR] Error during optimization: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
-
+    print("\n========== FULL ERROR ==========")
+    traceback.print_exc()
+    print("================================")
+    raise HTTPException(
+        status_code=500,
+        detail=str(e)
+    )
 
 @app.post("/geocode")
 async def geocode_address(address: str):
